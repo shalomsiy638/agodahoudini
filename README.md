@@ -6,7 +6,7 @@ A chrome extension that opens a new agoda property page in an incognito window w
 1. Download this repository as a zip file and unzip it. See instructions here https://youtu.be/mTM9t0Lfy7Q?si=wl37OZV7Ziqjqxs4&t=323
 2. Install the Agoda Houdini extension on chrome. See instructions here https://www.youtube.com/watch?v=oswjtLwCUqg
 3. Browse agoda as how you would normally. You can even apply discount promo codes of agoda or use special links / URLs of any marketing partners such as banks.
-4. Once on a property page or checkout page, click the Agoda Houdini extension. This will open the same property page in a new incognito window. NOTE: Make sure all incognito windows are closed before you click the extension.
+4. Once on a property page or checkout page, click the Agoda Houdini extension. This will open the same property page in a new incognito window. NOTE: This will open a new incognito window every time you click the extension
 5. Compare the agoda property page in the incognito window and compare prices with your non-incognito window.
 6. If the price in the incognito window is cheaper and you want to checkout, simply click login to enjoy the discount or lower price.
 7. Enjoy 
