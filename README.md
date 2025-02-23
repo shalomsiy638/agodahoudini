@@ -1,7 +1,7 @@
 # agoda houdini
 A chrome extension that opens a new agoda property page in an incognito window with a cheaper price.
 
-![]https://github.com/shalomsiy638/agodahoudini/blob/main/Logo%20maker%20project-1%20(1).png
+![](https://github.com/shalomsiy638/agodahoudini/blob/main/Logo%20maker%20project-1%20(1).png)
 
 ####How to use the chrome extension
 
