@@ -3,7 +3,7 @@ A chrome extension that opens a new agoda property page in an incognito window w
 
 ![](https://github.com/shalomsiy638/agodahoudini/blob/main/Logo%20maker%20project-1%20(1).png)
 
-####How to use the chrome extension
+### How to use the chrome extension
 
 1. Download this repository as a zip file and unzip it. See instructions here https://youtu.be/mTM9t0Lfy7Q?si=wl37OZV7Ziqjqxs4&t=323
 2. Install the Agoda Houdini extension on chrome. See instructions here https://www.youtube.com/watch?v=oswjtLwCUqg
