@@ -45,23 +45,69 @@ function extractAgodaData() {
     const checkoutCheckIn = document.querySelector('input[name="travel_start_date"]');
     const checkoutCheckOut = document.querySelector('input[name="travel_end_date"]');
 
-    // If checkout page elements exist, use those
     if (checkoutHotelId && checkoutCheckIn && checkoutCheckOut) {
       const hotelId = checkoutHotelId.value;
       const checkInDate = checkoutCheckIn.value;
       const checkOutDate = checkoutCheckOut.value;
 
-      if (!hotelId || !checkInDate.match(/^\d{4}-\d{2}-\d{2}$/) || !checkOutDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        return { error: "Invalid data format found on the checkout page." };
+      // Extract guest info from checkout page - Fixed regex
+      const guestInfoSpan = document.querySelector('[data-testid="room-info-guest-details"]');
+      const roomCountSpan = document.querySelector('[data-section="cross-out-price"]');
+      
+      let adults = 1, children = 0, rooms = 1;
+      
+      if (guestInfoSpan) {
+        const guestText = guestInfoSpan.textContent;
+        console.log('Guest info text:', guestText); // Debug log
+        
+        // Updated regex patterns to handle both singular and plural forms
+        const adultMatch = guestText.match(/(\d+)\s*adult(s)?/i);
+        const childMatch = guestText.match(/,\s*(\d+)\s*child(ren)?/i);
+        
+        if (adultMatch) {
+          adults = parseInt(adultMatch[1]);
+          console.log('Found adults:', adults, 'Plural:', !!adultMatch[2]);
+        }
+        if (childMatch) {
+          children = parseInt(childMatch[1]);
+          console.log('Found children:', children, 'Plural:', !!childMatch[2]);
+        }
+        
+        console.log('Parsed guest info:', { adults, children }); // Debug log
+      }
+      
+      if (roomCountSpan) {
+        const roomText = roomCountSpan.textContent;
+        console.log('Room info text:', roomText); // Debug log
+        
+        // Updated regex to handle both singular and plural forms of "room"
+        const roomMatch = roomText.match(/\((\d+)\s*room(s)?\s*x/i);
+        if (roomMatch) {
+          rooms = parseInt(roomMatch[1]);
+          console.log('Found rooms:', rooms, 'Plural:', !!roomMatch[2]);
+        }
       }
 
-      return { hotelId, checkInDate, checkOutDate };
+      // Extract country and currency from page script tags
+      const pageScripts = document.getElementsByTagName('script');
+      let country = '', currency = '';
+      for (let script of pageScripts) {
+        const countryMatch = script.textContent.match(/"countryOrigin"\s*:\s*"([^"]+)"/);
+        const currencyMatch = script.textContent.match(/"currencyCode"\s*:\s*"([^"]+)"/);
+        if (countryMatch) country = countryMatch[1];
+        if (currencyMatch) currency = currencyMatch[1];
+      }
+
+      console.log('Checkout Page Data:', { hotelId, checkInDate, checkOutDate, adults, children, rooms, country, currency });
+      return { hotelId, checkInDate, checkOutDate, adults, children, rooms, country, currency };
     }
 
-    // Fall back to hotel page selectors
+    // Hotel page extraction
     const hotelElem = document.querySelector('[data-element-property-id]');
     const checkInElem = document.querySelector('[data-selenium="checkInBox"]');
     const checkOutElem = document.querySelector('[data-selenium="checkOutBox"]');
+    // Updated selector to match exact element with all required attributes
+    const occupancyBox = document.querySelector('[data-element-name="occupancy-box"][role="button"][aria-label*="Guests and rooms"]');
   
     if (!hotelElem || !checkInElem || !checkOutElem) {
       return { error: "Required elements not found. Please ensure you're on a valid Agoda hotel or checkout page." };
@@ -71,24 +117,60 @@ function extractAgodaData() {
     const checkInDate = checkInElem.getAttribute("data-date");
     const checkOutDate = checkOutElem.getAttribute("data-date");
     
-    if (!hotelId || !checkInDate.match(/^\d{4}-\d{2}-\d{2}$/) || !checkOutDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      return { error: "Invalid data format found on the hotel page." };
+    // Simplified occupancy info extraction using only aria-label
+    let adults = 1, children = 0, rooms = 1;
+    if (occupancyBox) {
+      const ariaLabel = occupancyBox.getAttribute('aria-label');
+      if (ariaLabel) {
+        // Updated regex to handle both singular and plural forms of both "child" and "room"
+        const numbers = ariaLabel.match(/(\d+)\s*adults?,\s*(\d+)\s*child(?:ren)?\s+(\d+)\s*room(?:s)?/i);
+        if (numbers) {
+          adults = parseInt(numbers[1]);
+          children = parseInt(numbers[2]);
+          rooms = parseInt(numbers[3]);
+          console.log('Extracted from aria-label:', {
+            adults,
+            children,
+            rooms,
+            originalText: ariaLabel,
+            isPlural: {
+              rooms: parseInt(numbers[3]) > 1
+            }
+          });
+        }
+      }
+    }
+
+    // Extract country and currency from page script tags
+    const pageScripts = document.getElementsByTagName('script');
+    let country = '', currency = '';
+    for (let script of pageScripts) {
+      const countryMatch = script.textContent.match(/"countryOrigin"\s*:\s*"([^"]+)"/);
+      const currencyMatch = script.textContent.match(/"currencyCode"\s*:\s*"([^"]+)"/);
+      if (countryMatch) country = countryMatch[1];
+      if (currencyMatch) currency = currencyMatch[1];
     }
     
-    return { hotelId, checkInDate, checkOutDate };
+    console.log('Hotel Page Data:', { hotelId, checkInDate, checkOutDate, adults, children, rooms, country, currency });
+    return { hotelId, checkInDate, checkOutDate, adults, children, rooms, country, currency };
   } catch (error) {
     return { error: error.message };
   }
 }
 
 // Helper function to construct the target URL
-function buildUrl({ hotelId, checkInDate, checkOutDate }) {
+function buildUrl({ hotelId, checkInDate, checkOutDate, adults, children, rooms, country, currency }) {
   // Split dates in format YYYY-MM-DD
   const [inYear, inMonth, inDay] = checkInDate.split("-");
   const [outYear, outMonth, outDay] = checkOutDate.split("-");
   
-  const baseUrl = "https://www.agoda.com/partners/partnersearch.aspx";
-  const params = new URLSearchParams({
+  // Debug logging
+  console.log('Building URL with params:', {
+    adults, children, rooms, country, currency
+  });
+
+  // Ensure all parameters are strings and use default values if undefined
+  const params = {
     site_id: "1917614",
     CkInDay: inDay,
     CkInMonth: inMonth,
@@ -96,10 +178,23 @@ function buildUrl({ hotelId, checkInDate, checkOutDate }) {
     CkOutDay: outDay,
     CkOutMonth: outMonth,
     CkOutYear: outYear,
-    selectedproperty: hotelId
-  });
-  
-  return `${baseUrl}?${params.toString()}`;
+    selectedproperty: hotelId,
+    NumberOfAdults: adults,
+    NumberOfChildren: children,
+    NumberOfRooms: rooms,
+    UserCountry: country || '',
+    Currency: currency || ''
+  };
+
+  // Debug logging
+  console.log('Final URL params:', params);
+
+  const queryString = Object.entries(params)
+    .filter(([_, value]) => value !== '') // Remove empty values
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+    .join('&');
+
+  return `https://www.agoda.com/partners/partnersearch.aspx?${queryString}`;
 }
 
 // Function to show error with example
