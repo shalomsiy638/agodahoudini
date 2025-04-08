@@ -13,3 +13,6 @@ A chrome extension that opens a new agoda property page in an incognito window w
 6. Compare the agoda property page in the incognito window and compare prices with your non-incognito window.
 7. If the price in the incognito window is cheaper and you want to checkout, simply click login to enjoy the discount or lower price.
 8. Enjoy 
+
+Troubleshooting tips:
+1. In case the adults, rooms and children in the occupancy options are incorrectly showing in the incognito tab, you may need to refresh it from the original window before clicking the Agoda Houdini extension again. 
