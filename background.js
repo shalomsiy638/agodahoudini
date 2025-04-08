@@ -122,22 +122,45 @@ function extractAgodaData() {
     if (occupancyBox) {
       const ariaLabel = occupancyBox.getAttribute('aria-label');
       if (ariaLabel) {
-        // Updated regex to handle both singular and plural forms of both "child" and "room"
-        const numbers = ariaLabel.match(/(\d+)\s*adults?,\s*(\d+)\s*child(?:ren)?\s+(\d+)\s*room(?:s)?/i);
-        if (numbers) {
-          adults = parseInt(numbers[1]);
-          children = parseInt(numbers[2]);
-          rooms = parseInt(numbers[3]);
-          console.log('Extracted from aria-label:', {
-            adults,
-            children,
-            rooms,
-            originalText: ariaLabel,
-            isPlural: {
-              rooms: parseInt(numbers[3]) > 1
-            }
-          });
+        // First decode any HTML entities and clean up the string
+        const decodedLabel = ariaLabel.replace(/&nbsp;/g, ' ').trim();
+        console.log('Raw aria-label:', ariaLabel);
+        console.log('Decoded aria-label:', decodedLabel);
+
+        // Try pattern without children first
+        let matches = decodedLabel.match(/(\d+)\s*adults?\s+(\d+)\s*room(?:s)?/i);
+        
+        if (matches) {
+          // Case: No children
+          adults = parseInt(matches[1], 10) || 1;
+          rooms = parseInt(matches[2], 10) || 1;
+          children = 0;
+          console.log('Matched pattern without children:', { adults, rooms });
+        } else {
+          // Try pattern with children
+          matches = decodedLabel.match(/(\d+)\s*adults?,\s*(\d+)\s*child(?:ren)?\s+(\d+)\s*room(?:s)?/i);
+          if (matches) {
+            // Case: Has children
+            adults = parseInt(matches[1], 10) || 1;
+            children = parseInt(matches[2], 10) || 0;
+            rooms = parseInt(matches[3], 10) || 1;
+            console.log('Matched pattern with children:', { adults, children, rooms });
+          } else {
+            console.log('No pattern matched, using defaults');
+          }
         }
+
+        // Force validation of extracted values
+        adults = Math.max(1, adults);
+        rooms = Math.max(1, rooms);
+        children = Math.max(0, children);
+
+        console.log('Final validated values:', {
+          adults,
+          children,
+          rooms,
+          originalText: decodedLabel
+        });
       }
     }
 
